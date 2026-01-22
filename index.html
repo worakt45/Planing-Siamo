@@ -1,0 +1,546 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Calendar, 
+  Code, 
+  Briefcase, 
+  Settings, 
+  Globe, 
+  Moon, 
+  Sun, 
+  Plus, 
+  Trash2, 
+  Save, 
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  Shield,
+  Users,
+  Flame
+} from 'lucide-react';
+
+// --- Types & Interfaces ---
+
+type Language = 'en' | 'th' | 'ru';
+
+interface Translation {
+  title: string;
+  subtitle: string;
+  vision: string;
+  timeline: string;
+  perspectives: string;
+  dev_view: string;
+  investor_view: string;
+  operator_view: string;
+  add_step: string;
+  step: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  actions: string;
+  save_success: string;
+  q1: string;
+  q2: string;
+  q3: string;
+  q4: string;
+  moat_title: string;
+  moat_desc: string;
+}
+
+interface PlanStep {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: 'pending' | 'in_progress' | 'completed';
+}
+
+// --- Translations ---
+
+const translations: Record<Language, Translation> = {
+  en: {
+    title: "Siamo Launch Strategy",
+    subtitle: "Speed is Key in the AI Era",
+    vision: "Strategic Vision",
+    timeline: "Interactive Timeline Plan",
+    perspectives: "Strategic Analysis",
+    dev_view: "Developer Perspective: Lean & AI-First",
+    investor_view: "Investor Perspective: The Moat",
+    operator_view: "Operator Perspective: Workflow Reality",
+    add_step: "Add New Step",
+    step: "Step",
+    start_date: "Start Date",
+    end_date: "End Date",
+    status: "Status",
+    actions: "Actions",
+    save_success: "Plan saved locally!",
+    q1: "Q1",
+    q2: "Q2",
+    q3: "Q3",
+    q4: "Q4",
+    moat_title: "The Moat Strategy",
+    moat_desc: "By integrating into daily operations (bills, TM30, repairs), we lock users in with service quality, making switching painful."
+  },
+  th: {
+    title: "กลยุทธ์การเปิดตัว Siamo",
+    subtitle: "ยุค AI ความไวคือหัวใจของการแข่งขัน",
+    vision: "วิสัยทัศน์เชิงกลยุทธ์",
+    timeline: "แผนงานและไทม์ไลน์ (แก้ไขได้)",
+    perspectives: "การวิเคราะห์ 3 มุมมอง",
+    dev_view: "มุมนักพัฒนา: เน้น Lean และใช้ AI",
+    investor_view: "มุมนักลงทุน: การสร้างคูเมือง (Moat)",
+    operator_view: "มุมผู้ดำเนินการ: โลกความเป็นจริง",
+    add_step: "เพิ่มขั้นตอนใหม่",
+    step: "ขั้นตอน",
+    start_date: "วันที่เริ่ม",
+    end_date: "วันที่สิ้นสุด",
+    status: "สถานะ",
+    actions: "จัดการ",
+    save_success: "บันทึกแผนงานเรียบร้อย!",
+    q1: "ไตรมาส 1",
+    q2: "ไตรมาส 2",
+    q3: "ไตรมาส 3",
+    q4: "ไตรมาส 4",
+    moat_title: "กลยุทธ์สร้างคูเมือง",
+    moat_desc: "การเข้าไปเป็นส่วนหนึ่งของ Operation (บิล, TM30) จะช่วยมัดใจลูกค้าได้ดีกว่าแค่เป็น Marketplace ธรรมดา"
+  },
+  ru: {
+    title: "Стратегия запуска Siamo",
+    subtitle: "Скорость — ключ к успеху в эру ИИ",
+    vision: "Стратегическое видение",
+    timeline: "Интерактивный план",
+    perspectives: "Стратегический анализ",
+    dev_view: "Взгляд разработчика: Lean и AI",
+    investor_view: "Взгляд инвестора: Защитный ров",
+    operator_view: "Взгляд оператора: Реальные процессы",
+    add_step: "Добавить шаг",
+    step: "Шаг",
+    start_date: "Начало",
+    end_date: "Конец",
+    status: "Статус",
+    actions: "Действия",
+    save_success: "План сохранен локально!",
+    q1: "Кв 1",
+    q2: "Кв 2",
+    q3: "Кв 3",
+    q4: "Кв 4",
+    moat_title: "Стратегия защиты (Moat)",
+    moat_desc: "Интеграция в ежедневные операции (счета, документы) удерживает клиентов лучше, чем просто бронирование."
+  }
+};
+
+// --- Initial Data ---
+
+const initialSteps: PlanStep[] = [
+  {
+    id: '1',
+    title: "Manual Management (The Boring Step)",
+    description: "Hire manager, manage one unit manually (Airbnb/Long-term) to test workflows.",
+    startDate: "2024-01-01",
+    endDate: "2024-03-31",
+    status: 'completed'
+  },
+  {
+    id: '2',
+    title: "Develop MVP Software",
+    description: "Build essential features: Contracts, TM30, Bill management. Onboard first users.",
+    startDate: "2024-02-15",
+    endDate: "2024-05-30",
+    status: 'in_progress'
+  },
+  {
+    id: '3',
+    title: "Payment System Integration",
+    description: "Refine UX/UI, add payment gateway, test with real landlords/tenants.",
+    startDate: "2024-06-01",
+    endDate: "2024-08-31",
+    status: 'pending'
+  },
+  {
+    id: '4',
+    title: "Launch Marketplace & Scale",
+    description: "Public launch, marketing, show traction to big players/investors.",
+    startDate: "2024-09-01",
+    endDate: "2024-12-31",
+    status: 'pending'
+  }
+];
+
+// --- Components ---
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const colors = {
+    pending: "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+    in_progress: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    completed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+  };
+  
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status as keyof typeof colors]}`}>
+      {status.replace('_', ' ').toUpperCase()}
+    </span>
+  );
+};
+
+export default function SiamoLaunchPlanner() {
+  const [lang, setLang] = useState<Language>('th');
+  const [darkMode, setDarkMode] = useState(false);
+  const [steps, setSteps] = useState<PlanStep[]>(initialSteps);
+  const [showSaveMsg, setShowSaveMsg] = useState(false);
+
+  const t = translations[lang];
+
+  // Load from local storage on mount
+  useEffect(() => {
+    const savedSteps = localStorage.getItem('proptech_steps');
+    if (savedSteps) {
+      setSteps(JSON.parse(savedSteps));
+    }
+    
+    // Check system preference for dark mode
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setDarkMode(true);
+    }
+  }, []);
+
+  // Save to local storage whenever steps change
+  useEffect(() => {
+    localStorage.setItem('proptech_steps', JSON.stringify(steps));
+  }, [steps]);
+
+  // Dark mode toggle effect
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  const handleStepChange = (id: string, field: keyof PlanStep, value: string) => {
+    setSteps(steps.map(step => 
+      step.id === id ? { ...step, [field]: value } : step
+    ));
+  };
+
+  const addStep = () => {
+    const newId = (steps.length + 1).toString();
+    const lastDate = steps[steps.length - 1]?.endDate || new Date().toISOString().split('T')[0];
+    
+    // Simple logic to add 1 month for the new step default
+    const nextDate = new Date(lastDate);
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    
+    const newStep: PlanStep = {
+      id: Date.now().toString(),
+      title: "New Strategic Step",
+      description: "Description of the new phase...",
+      startDate: lastDate,
+      endDate: nextDate.toISOString().split('T')[0],
+      status: 'pending'
+    };
+    setSteps([...steps, newStep]);
+  };
+
+  const removeStep = (id: string) => {
+    setSteps(steps.filter(step => step.id !== id));
+  };
+
+  const handleManualSave = () => {
+    localStorage.setItem('proptech_steps', JSON.stringify(steps));
+    setShowSaveMsg(true);
+    setTimeout(() => setShowSaveMsg(false), 2000);
+  };
+
+  // Timeline Calculation Helper
+  const getQuarter = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear().toString().substr(-2);
+    if (month <= 3) return `Q1 '${year}`;
+    if (month <= 6) return `Q2 '${year}`;
+    if (month <= 9) return `Q3 '${year}`;
+    return `Q4 '${year}`;
+  };
+
+  const calculateDurationWidth = (start: string, end: string, minDate: number, totalDuration: number) => {
+    const s = new Date(start).getTime();
+    const e = new Date(end).getTime();
+    const left = ((s - minDate) / totalDuration) * 100;
+    const width = ((e - s) / totalDuration) * 100;
+    return { left: `${left}%`, width: `${width}%` };
+  };
+
+  // Get min and max dates for the timeline visualization
+  const minDate = Math.min(...steps.map(s => new Date(s.startDate).getTime()));
+  const maxDate = Math.max(...steps.map(s => new Date(s.endDate).getTime()));
+  // Add buffer
+  const paddedMin = minDate - (1000 * 60 * 60 * 24 * 15); 
+  const paddedMax = maxDate + (1000 * 60 * 60 * 24 * 15);
+  const totalDuration = paddedMax - paddedMin;
+
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-red-900/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-2">
+              <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-500/30">
+                <Flame className="text-white h-5 w-5" />
+              </div>
+              <span className="font-bold text-2xl tracking-tighter hidden sm:block">
+                Siamo
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Language Switcher */}
+              <div className="relative group">
+                <button className="flex items-center gap-1 text-sm font-medium hover:text-red-500 transition-colors">
+                  <Globe className="h-4 w-4" />
+                  {lang.toUpperCase()}
+                </button>
+                <div className="absolute right-0 mt-2 w-24 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 transform origin-top-right">
+                  <button onClick={() => setLang('en')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">English</button>
+                  <button onClick={() => setLang('th')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">ไทย</button>
+                  <button onClick={() => setLang('ru')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Русский</button>
+                </div>
+              </div>
+
+              {/* Theme Toggle */}
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              >
+                {darkMode ? <Sun className="h-5 w-5 text-orange-400" /> : <Moon className="h-5 w-5 text-gray-600" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+        
+        {/* Header Section */}
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight pb-2">
+             <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent">
+              {t.title}
+             </span>
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            {t.subtitle}
+          </p>
+        </div>
+
+        {/* The 3 Perspectives Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-red-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 group">
+            <div className="h-12 w-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors">
+              <Code className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-xl font-bold mb-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{t.dev_view}</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+              Use No-Code/Low-Code to speed up Step 2. Don't wait for Step 1 to finish completely. Automate the "boring" tasks with AI Agents immediately.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-orange-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-orange-500 dark:hover:border-orange-500 transition-all duration-300 relative overflow-hidden group">
+             <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-500 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
+            <div className="h-12 w-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/40 transition-colors">
+              <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h3 className="text-xl font-bold mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{t.investor_view}</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+              <strong>{t.moat_title}:</strong> {t.moat_desc} Focus on Unit Economics and Retention.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-gray-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-gray-500 dark:hover:border-gray-400 transition-all duration-300 group">
+            <div className="h-12 w-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-4 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
+              <Briefcase className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+            </div>
+            <h3 className="text-xl font-bold mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{t.operator_view}</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+              Prioritize "Pain Killers" like TM30 & Bill Management. Manual workflow first ensures the software solves real problems, not imaginary ones.
+            </p>
+          </div>
+        </div>
+
+        {/* Timeline Editor Section */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-800 pb-4">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Calendar className="h-6 w-6 text-red-600" />
+                {t.timeline}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                <Shield className="h-3 w-3" /> Real-time Auto-save enabled
+              </p>
+            </div>
+            <div className="flex gap-2">
+               <button 
+                onClick={handleManualSave}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+              >
+                <Save className="h-4 w-4" />
+                {showSaveMsg ? <span className="text-green-600">{t.save_success}</span> : "Save"}
+              </button>
+              <button 
+                onClick={addStep}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium shadow-lg shadow-red-500/30"
+              >
+                <Plus className="h-4 w-4" />
+                {t.add_step}
+              </button>
+            </div>
+          </div>
+
+          {/* Visual Gantt Chart (Simplified) */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 overflow-x-auto">
+             {/* Year/Quarter Markers */}
+             <div className="flex border-b border-gray-200 dark:border-gray-800 pb-2 mb-4 text-xs text-gray-400 font-mono">
+                {Array.from({length: 6}).map((_, i) => {
+                  // Generate roughly 6 points along the timeline for reference
+                  const date = new Date(paddedMin + (totalDuration / 5) * i);
+                  return (
+                    <div key={i} className="flex-1 border-l border-gray-100 dark:border-gray-800 pl-1">
+                      {date.toLocaleString(lang === 'th' ? 'th-TH' : 'en-US', { month: 'short', year: '2-digit' })}
+                    </div>
+                  )
+                })}
+             </div>
+
+            <div className="space-y-4 relative min-w-[600px]">
+              {steps.map((step, index) => {
+                 const { left, width } = calculateDurationWidth(step.startDate, step.endDate, paddedMin, totalDuration);
+                 return (
+                  <div key={step.id} className="relative h-12 flex items-center group">
+                    {/* Grid line background */}
+                    <div className="absolute inset-0 border-b border-gray-100 dark:border-gray-800/50 pointer-events-none"></div>
+                    
+                    {/* Bar */}
+                    <div 
+                      className="absolute h-8 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 opacity-80 group-hover:opacity-100 transition-all cursor-pointer shadow-sm flex items-center px-3 hover:shadow-red-500/20"
+                      style={{ left, width }}
+                      title={`${step.startDate} to ${step.endDate}`}
+                    >
+                      <span className="text-xs font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
+                         {index + 1}. {step.title}
+                      </span>
+                    </div>
+                    
+                    {/* Quarter Label floating */}
+                    <div className="absolute text-[10px] text-gray-400 -top-1" style={{ left }}>
+                       {getQuarter(step.startDate)}
+                    </div>
+                  </div>
+                 );
+              })}
+            </div>
+          </div>
+
+          {/* Editable List */}
+          <div className="space-y-4">
+            {steps.map((step, index) => (
+              <div 
+                key={step.id} 
+                className="group bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm hover:shadow-md"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  
+                  {/* Step Info */}
+                  <div className="lg:col-span-1 flex flex-col items-center justify-center pt-2">
+                    <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center justify-center font-bold">
+                      {index + 1}
+                    </div>
+                    <div className="h-full w-0.5 bg-gray-100 dark:bg-gray-800 mt-4 group-last:hidden"></div>
+                  </div>
+
+                  {/* Content Inputs */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                        {t.step} Title
+                      </label>
+                      <input 
+                        type="text" 
+                        value={step.title}
+                        onChange={(e) => handleStepChange(step.id, 'title', e.target.value)}
+                        className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none transition-colors pb-1 text-gray-900 dark:text-white placeholder-gray-400"
+                        placeholder="Step Title"
+                      />
+                    </div>
+                    <div>
+                      <input 
+                        type="text" 
+                        value={step.description}
+                        onChange={(e) => handleStepChange(step.id, 'description', e.target.value)}
+                        className="w-full text-sm text-gray-500 dark:text-gray-400 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none transition-colors pb-1 placeholder-gray-500"
+                        placeholder="Description of this phase..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Date & Status Inputs */}
+                  <div className="lg:col-span-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">{t.start_date}</label>
+                      <input 
+                        type="date" 
+                        value={step.startDate}
+                        onChange={(e) => handleStepChange(step.id, 'startDate', e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none hover:border-red-200 dark:hover:border-red-900"
+                      />
+                      <div className="text-[10px] text-red-500 mt-1 font-mono text-right">{getQuarter(step.startDate)}</div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">{t.end_date}</label>
+                      <input 
+                        type="date" 
+                        value={step.endDate}
+                        onChange={(e) => handleStepChange(step.id, 'endDate', e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none hover:border-red-200 dark:hover:border-red-900"
+                      />
+                      <div className="text-[10px] text-red-500 mt-1 font-mono text-right">{getQuarter(step.endDate)}</div>
+                    </div>
+
+                    <div className="col-span-2 flex justify-between items-center mt-2">
+                      <select 
+                        value={step.status}
+                        onChange={(e) => handleStepChange(step.id, 'status', e.target.value)}
+                        className="bg-transparent text-sm font-medium text-gray-600 dark:text-gray-300 border-none focus:ring-0 cursor-pointer hover:text-red-500"
+                      >
+                        <option value="pending">⏳ Pending</option>
+                        <option value="in_progress">🔥 In Progress</option>
+                        <option value="completed">✅ Completed</option>
+                      </select>
+                      
+                      <button 
+                        onClick={() => removeStep(step.id)}
+                        className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Remove Step"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </main>
+      
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400 text-sm">
+        <p>© 2024 Siamo Strategy Planner. Built for Speed & Scale.</p>
+      </footer>
+    </div>
+  );
+}
