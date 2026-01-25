@@ -1,546 +1,617 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  Code, 
-  Briefcase, 
-  Settings, 
-  Globe, 
-  Moon, 
-  Sun, 
-  Plus, 
-  Trash2, 
-  Save, 
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  Shield,
-  Users,
-  Flame
-} from 'lucide-react';
-
-// --- Types & Interfaces ---
-
-type Language = 'en' | 'th' | 'ru';
-
-interface Translation {
-  title: string;
-  subtitle: string;
-  vision: string;
-  timeline: string;
-  perspectives: string;
-  dev_view: string;
-  investor_view: string;
-  operator_view: string;
-  add_step: string;
-  step: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  actions: string;
-  save_success: string;
-  q1: string;
-  q2: string;
-  q3: string;
-  q4: string;
-  moat_title: string;
-  moat_desc: string;
-}
-
-interface PlanStep {
-  id: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  status: 'pending' | 'in_progress' | 'completed';
-}
-
-// --- Translations ---
-
-const translations: Record<Language, Translation> = {
-  en: {
-    title: "Siamo Launch Strategy",
-    subtitle: "Speed is Key in the AI Era",
-    vision: "Strategic Vision",
-    timeline: "Interactive Timeline Plan",
-    perspectives: "Strategic Analysis",
-    dev_view: "Developer Perspective: Lean & AI-First",
-    investor_view: "Investor Perspective: The Moat",
-    operator_view: "Operator Perspective: Workflow Reality",
-    add_step: "Add New Step",
-    step: "Step",
-    start_date: "Start Date",
-    end_date: "End Date",
-    status: "Status",
-    actions: "Actions",
-    save_success: "Plan saved locally!",
-    q1: "Q1",
-    q2: "Q2",
-    q3: "Q3",
-    q4: "Q4",
-    moat_title: "The Moat Strategy",
-    moat_desc: "By integrating into daily operations (bills, TM30, repairs), we lock users in with service quality, making switching painful."
-  },
-  th: {
-    title: "กลยุทธ์การเปิดตัว Siamo",
-    subtitle: "ยุค AI ความไวคือหัวใจของการแข่งขัน",
-    vision: "วิสัยทัศน์เชิงกลยุทธ์",
-    timeline: "แผนงานและไทม์ไลน์ (แก้ไขได้)",
-    perspectives: "การวิเคราะห์ 3 มุมมอง",
-    dev_view: "มุมนักพัฒนา: เน้น Lean และใช้ AI",
-    investor_view: "มุมนักลงทุน: การสร้างคูเมือง (Moat)",
-    operator_view: "มุมผู้ดำเนินการ: โลกความเป็นจริง",
-    add_step: "เพิ่มขั้นตอนใหม่",
-    step: "ขั้นตอน",
-    start_date: "วันที่เริ่ม",
-    end_date: "วันที่สิ้นสุด",
-    status: "สถานะ",
-    actions: "จัดการ",
-    save_success: "บันทึกแผนงานเรียบร้อย!",
-    q1: "ไตรมาส 1",
-    q2: "ไตรมาส 2",
-    q3: "ไตรมาส 3",
-    q4: "ไตรมาส 4",
-    moat_title: "กลยุทธ์สร้างคูเมือง",
-    moat_desc: "การเข้าไปเป็นส่วนหนึ่งของ Operation (บิล, TM30) จะช่วยมัดใจลูกค้าได้ดีกว่าแค่เป็น Marketplace ธรรมดา"
-  },
-  ru: {
-    title: "Стратегия запуска Siamo",
-    subtitle: "Скорость — ключ к успеху в эру ИИ",
-    vision: "Стратегическое видение",
-    timeline: "Интерактивный план",
-    perspectives: "Стратегический анализ",
-    dev_view: "Взгляд разработчика: Lean и AI",
-    investor_view: "Взгляд инвестора: Защитный ров",
-    operator_view: "Взгляд оператора: Реальные процессы",
-    add_step: "Добавить шаг",
-    step: "Шаг",
-    start_date: "Начало",
-    end_date: "Конец",
-    status: "Статус",
-    actions: "Действия",
-    save_success: "План сохранен локально!",
-    q1: "Кв 1",
-    q2: "Кв 2",
-    q3: "Кв 3",
-    q4: "Кв 4",
-    moat_title: "Стратегия защиты (Moat)",
-    moat_desc: "Интеграция в ежедневные операции (счета, документы) удерживает клиентов лучше, чем просто бронирование."
-  }
-};
-
-// --- Initial Data ---
-
-const initialSteps: PlanStep[] = [
-  {
-    id: '1',
-    title: "Manual Management (The Boring Step)",
-    description: "Hire manager, manage one unit manually (Airbnb/Long-term) to test workflows.",
-    startDate: "2024-01-01",
-    endDate: "2024-03-31",
-    status: 'completed'
-  },
-  {
-    id: '2',
-    title: "Develop MVP Software",
-    description: "Build essential features: Contracts, TM30, Bill management. Onboard first users.",
-    startDate: "2024-02-15",
-    endDate: "2024-05-30",
-    status: 'in_progress'
-  },
-  {
-    id: '3',
-    title: "Payment System Integration",
-    description: "Refine UX/UI, add payment gateway, test with real landlords/tenants.",
-    startDate: "2024-06-01",
-    endDate: "2024-08-31",
-    status: 'pending'
-  },
-  {
-    id: '4',
-    title: "Launch Marketplace & Scale",
-    description: "Public launch, marketing, show traction to big players/investors.",
-    startDate: "2024-09-01",
-    endDate: "2024-12-31",
-    status: 'pending'
-  }
-];
-
-// --- Components ---
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const colors = {
-    pending: "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
-    in_progress: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    completed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-  };
-  
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status as keyof typeof colors]}`}>
-      {status.replace('_', ' ').toUpperCase()}
-    </span>
-  );
-};
-
-export default function SiamoLaunchPlanner() {
-  const [lang, setLang] = useState<Language>('th');
-  const [darkMode, setDarkMode] = useState(false);
-  const [steps, setSteps] = useState<PlanStep[]>(initialSteps);
-  const [showSaveMsg, setShowSaveMsg] = useState(false);
-
-  const t = translations[lang];
-
-  // Load from local storage on mount
-  useEffect(() => {
-    const savedSteps = localStorage.getItem('proptech_steps');
-    if (savedSteps) {
-      setSteps(JSON.parse(savedSteps));
-    }
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siamo Launch Planner</title>
     
-    // Check system preference for dark mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
-
-  // Save to local storage whenever steps change
-  useEffect(() => {
-    localStorage.setItem('proptech_steps', JSON.stringify(steps));
-  }, [steps]);
-
-  // Dark mode toggle effect
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const handleStepChange = (id: string, field: keyof PlanStep, value: string) => {
-    setSteps(steps.map(step => 
-      step.id === id ? { ...step, [field]: value } : step
-    ));
-  };
-
-  const addStep = () => {
-    const newId = (steps.length + 1).toString();
-    const lastDate = steps[steps.length - 1]?.endDate || new Date().toISOString().split('T')[0];
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    // Simple logic to add 1 month for the new step default
-    const nextDate = new Date(lastDate);
-    nextDate.setMonth(nextDate.getMonth() + 1);
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    const newStep: PlanStep = {
-      id: Date.now().toString(),
-      title: "New Strategic Step",
-      description: "Description of the new phase...",
-      startDate: lastDate,
-      endDate: nextDate.toISOString().split('T')[0],
-      status: 'pending'
-    };
-    setSteps([...steps, newStep]);
-  };
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  const removeStep = (id: string) => {
-    setSteps(steps.filter(step => step.id !== id));
-  };
+    <!-- Config for Tailwind to support Dark Mode properly -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans Thai', 'sans-serif'],
+                    },
+                    colors: {
+                        red: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626', // Primary Siamo Red
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                            950: '#450a0a',
+                        },
+                        orange: {
+                            500: '#f97316', // Gradient Partner
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 
-  const handleManualSave = () => {
-    localStorage.setItem('proptech_steps', JSON.stringify(steps));
-    setShowSaveMsg(true);
-    setTimeout(() => setShowSaveMsg(false), 2000);
-  };
+    <style>
+        /* Custom scrollbar for timeline */
+        .timeline-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .timeline-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+        .timeline-scroll::-webkit-scrollbar-thumb {
+            background: rgba(220, 38, 38, 0.3);
+            border-radius: 4px;
+        }
+        .dark .timeline-scroll::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+        }
+        /* Animation for dropdown */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dropdown-animate {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 transition-colors duration-300">
+    <div id="root"></div>
 
-  // Timeline Calculation Helper
-  const getQuarter = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear().toString().substr(-2);
-    if (month <= 3) return `Q1 '${year}`;
-    if (month <= 6) return `Q2 '${year}`;
-    if (month <= 9) return `Q3 '${year}`;
-    return `Q4 '${year}`;
-  };
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-  const calculateDurationWidth = (start: string, end: string, minDate: number, totalDuration: number) => {
-    const s = new Date(start).getTime();
-    const e = new Date(end).getTime();
-    const left = ((s - minDate) / totalDuration) * 100;
-    const width = ((e - s) / totalDuration) * 100;
-    return { left: `${left}%`, width: `${width}%` };
-  };
+        // --- Icons (Inline SVGs for reliability) ---
+        const Icon = ({ path, className }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {path}
+            </svg>
+        );
 
-  // Get min and max dates for the timeline visualization
-  const minDate = Math.min(...steps.map(s => new Date(s.startDate).getTime()));
-  const maxDate = Math.max(...steps.map(s => new Date(s.endDate).getTime()));
-  // Add buffer
-  const paddedMin = minDate - (1000 * 60 * 60 * 24 * 15); 
-  const paddedMax = maxDate + (1000 * 60 * 60 * 24 * 15);
-  const totalDuration = paddedMax - paddedMin;
+        const Icons = {
+            Flame: (props) => <Icon {...props} path={<><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></>} />,
+            Globe: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>} />,
+            Sun: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>} />,
+            Moon: (props) => <Icon {...props} path={<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>} />,
+            Code: (props) => <Icon {...props} path={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>} />,
+            TrendingUp: (props) => <Icon {...props} path={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>} />,
+            Briefcase: (props) => <Icon {...props} path={<><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>} />,
+            Calendar: (props) => <Icon {...props} path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>} />,
+            Shield: (props) => <Icon {...props} path={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>} />,
+            Save: (props) => <Icon {...props} path={<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>} />,
+            Plus: (props) => <Icon {...props} path={<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>} />,
+            Trash2: (props) => <Icon {...props} path={<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></>} />,
+            ChevronDown: (props) => <Icon {...props} path={<><polyline points="6 9 12 15 18 9"/></>} />
+        };
 
-  return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-red-900/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-500/30">
-                <Flame className="text-white h-5 w-5" />
-              </div>
-              <span className="font-bold text-2xl tracking-tighter hidden sm:block">
-                Siamo
-              </span>
-            </div>
+        // --- Translations ---
+        const translations = {
+            en: {
+                title: "Siamo Launch Strategy",
+                subtitle: "Speed is Key in the AI Era",
+                dev_view: "Developer Perspective: Lean & AI-First",
+                dev_desc: "Use No-Code/Low-Code to speed up Step 2. Don't wait for Step 1 to finish completely. Automate the \"boring\" tasks with AI Agents immediately.",
+                investor_view: "Investor Perspective: The Moat",
+                investor_desc_prefix: "The Moat Strategy:",
+                investor_desc: "By integrating into daily operations (bills, TM30, repairs), we lock users in with service quality, making switching painful. Focus on Unit Economics and Retention.",
+                operator_view: "Operator Perspective: Workflow Reality",
+                operator_desc: "Prioritize \"Pain Killers\" like TM30 & Bill Management. Manual workflow first ensures the software solves real problems, not imaginary ones.",
+                timeline: "Interactive Timeline Plan",
+                auto_save: "Real-time Auto-save enabled",
+                save_btn: "Save",
+                save_success: "Saved!",
+                add_step: "Add New Step",
+                step_title_label: "Title",
+                placeholder_title: "Step Title",
+                placeholder_desc: "Description of this phase...",
+                start_date: "Start Date",
+                end_date: "End Date",
+                status_pending: "Pending",
+                status_progress: "In Progress",
+                status_completed: "Completed",
+                footer_text: "© 2024 Siamo Strategy Planner. Built for Speed & Scale.",
+                q1: "Q1", q2: "Q2", q3: "Q3", q4: "Q4"
+            },
+            th: {
+                title: "กลยุทธ์การเปิดตัว Siamo",
+                subtitle: "ยุค AI ความไวคือหัวใจของการแข่งขัน",
+                dev_view: "มุมนักพัฒนา: เน้น Lean และใช้ AI",
+                dev_desc: "ใช้ No-Code/Low-Code เพื่อเร่ง Step 2 อย่ารอให้ Step 1 จบสมบูรณ์ ใช้ AI Agents ช่วยทำงานซ้ำซาก (Boring tasks) ทันที",
+                investor_view: "มุมนักลงทุน: การสร้างคูเมือง (Moat)",
+                investor_desc_prefix: "กลยุทธ์สร้างคูเมือง:",
+                investor_desc: "การเข้าไปเป็นส่วนหนึ่งของ Operation (บิล, TM30) จะช่วยมัดใจลูกค้าได้ดีกว่าแค่เป็น Marketplace ธรรมดา เน้น Unit Economics และการรักษาลูกค้า",
+                operator_view: "มุมผู้ดำเนินการ: โลกความเป็นจริง",
+                operator_desc: "เน้นแก้ปัญหาที่เจ็บปวด (Pain Killers) เช่น TM30 และการจัดการบิล การเริ่มทำมือช่วยให้แน่ใจว่าซอฟต์แวร์แก้ปัญหาได้จริง",
+                timeline: "แผนงานและไทม์ไลน์ (แก้ไขได้)",
+                auto_save: "ระบบบันทึกอัตโนมัติทำงานอยู่",
+                save_btn: "บันทึก",
+                save_success: "บันทึกแล้ว!",
+                add_step: "เพิ่มขั้นตอนใหม่",
+                step_title_label: "หัวข้อ",
+                placeholder_title: "ชื่อขั้นตอน",
+                placeholder_desc: "รายละเอียดของขั้นตอนนี้...",
+                start_date: "วันที่เริ่ม",
+                end_date: "วันที่สิ้นสุด",
+                status_pending: "รอดำเนินการ",
+                status_progress: "กำลังดำเนินการ",
+                status_completed: "เสร็จสมบูรณ์",
+                footer_text: "© 2024 Siamo Strategy Planner. สร้างเพื่อความเร็วและการขยายตัว",
+                q1: "Q1", q2: "Q2", q3: "Q3", q4: "Q4"
+            },
+            ru: {
+                title: "Стратегия запуска Siamo",
+                subtitle: "Скорость — ключ к успеху в эру ИИ",
+                dev_view: "Взгляд разработчика: Lean и AI",
+                dev_desc: "Используйте No-Code/Low-Code для ускорения шага 2. Автоматизируйте рутинные задачи с помощью ИИ-агентов немедленно.",
+                investor_view: "Взгляд инвестора: Защитный ров",
+                investor_desc_prefix: "Стратегия защиты:",
+                investor_desc: "Интеграция в ежедневные операции (счета, документы) удерживает клиентов лучше, чем просто бронирование. Фокус на Unit Economics.",
+                operator_view: "Взгляд оператора: Реальные процессы",
+                operator_desc: "Приоритет «Болеутоляющим», таким как TM30 и управление счетами. Ручной процесс гарантирует решение реальных проблем.",
+                timeline: "Интерактивный план",
+                auto_save: "Автосохранение включено",
+                save_btn: "Сохранить",
+                save_success: "Сохранено!",
+                add_step: "Добавить шаг",
+                step_title_label: "Название",
+                placeholder_title: "Название шага",
+                placeholder_desc: "Описание этого этапа...",
+                start_date: "Начало",
+                end_date: "Конец",
+                status_pending: "В ожидании",
+                status_progress: "В процессе",
+                status_completed: "Завершено",
+                footer_text: "© 2024 Siamo Strategy Planner. Создано для скорости и масштабирования.",
+                q1: "Кв 1", q2: "Кв 2", q3: "Кв 3", q4: "Кв 4"
+            }
+        };
 
-            <div className="flex items-center gap-4">
-              {/* Language Switcher */}
-              <div className="relative group">
-                <button className="flex items-center gap-1 text-sm font-medium hover:text-red-500 transition-colors">
-                  <Globe className="h-4 w-4" />
-                  {lang.toUpperCase()}
-                </button>
-                <div className="absolute right-0 mt-2 w-24 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 transform origin-top-right">
-                  <button onClick={() => setLang('en')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">English</button>
-                  <button onClick={() => setLang('th')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">ไทย</button>
-                  <button onClick={() => setLang('ru')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Русский</button>
-                </div>
-              </div>
+        const initialSteps = [
+            {
+                id: '1',
+                title: "Manual Management (The Boring Step)",
+                description: "Hire manager, manage one unit manually (Airbnb/Long-term) to test workflows.",
+                startDate: "2024-01-01",
+                endDate: "2024-03-31",
+                status: 'completed'
+            },
+            {
+                id: '2',
+                title: "Develop MVP Software",
+                description: "Build essential features: Contracts, TM30, Bill management. Onboard first users.",
+                startDate: "2024-02-15",
+                endDate: "2024-05-30",
+                status: 'in_progress'
+            },
+            {
+                id: '3',
+                title: "Payment System Integration",
+                description: "Refine UX/UI, add payment gateway, test with real landlords/tenants.",
+                startDate: "2024-06-01",
+                endDate: "2024-08-31",
+                status: 'pending'
+            },
+            {
+                id: '4',
+                title: "Launch Marketplace & Scale",
+                description: "Public launch, marketing, show traction to big players/investors.",
+                startDate: "2024-09-01",
+                endDate: "2024-12-31",
+                status: 'pending'
+            }
+        ];
 
-              {/* Theme Toggle */}
-              <button 
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              >
-                {darkMode ? <Sun className="h-5 w-5 text-orange-400" /> : <Moon className="h-5 w-5 text-gray-600" />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+        // --- Main Component ---
+        function SiamoLaunchPlanner() {
+            const [lang, setLang] = useState('th');
+            const [darkMode, setDarkMode] = useState(false);
+            const [steps, setSteps] = useState(initialSteps);
+            const [showSaveMsg, setShowSaveMsg] = useState(false);
+            const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        
-        {/* Header Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight pb-2">
-             <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent">
-              {t.title}
-             </span>
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            {t.subtitle}
-          </p>
-        </div>
+            const t = translations[lang];
 
-        {/* The 3 Perspectives Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-red-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 group">
-            <div className="h-12 w-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors">
-              <Code className="h-6 w-6 text-red-600 dark:text-red-400" />
-            </div>
-            <h3 className="text-xl font-bold mb-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{t.dev_view}</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-              Use No-Code/Low-Code to speed up Step 2. Don't wait for Step 1 to finish completely. Automate the "boring" tasks with AI Agents immediately.
-            </p>
-          </div>
+            // Load data and preferences
+            useEffect(() => {
+                const savedSteps = localStorage.getItem('siamo_steps');
+                if (savedSteps) {
+                    setSteps(JSON.parse(savedSteps));
+                }
+                
+                // Load saved language
+                const savedLang = localStorage.getItem('siamo_lang');
+                if (savedLang && ['en', 'th', 'ru'].includes(savedLang)) {
+                    setLang(savedLang);
+                }
 
-          <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-orange-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-orange-500 dark:hover:border-orange-500 transition-all duration-300 relative overflow-hidden group">
-             <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-500 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
-            <div className="h-12 w-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/40 transition-colors">
-              <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <h3 className="text-xl font-bold mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{t.investor_view}</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-              <strong>{t.moat_title}:</strong> {t.moat_desc} Focus on Unit Economics and Retention.
-            </p>
-          </div>
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    setDarkMode(true);
+                }
+            }, []);
 
-          <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-gray-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-gray-500 dark:hover:border-gray-400 transition-all duration-300 group">
-            <div className="h-12 w-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-4 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
-              <Briefcase className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-            </div>
-            <h3 className="text-xl font-bold mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{t.operator_view}</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-              Prioritize "Pain Killers" like TM30 & Bill Management. Manual workflow first ensures the software solves real problems, not imaginary ones.
-            </p>
-          </div>
-        </div>
+            // Save steps
+            useEffect(() => {
+                localStorage.setItem('siamo_steps', JSON.stringify(steps));
+            }, [steps]);
 
-        {/* Timeline Editor Section */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-800 pb-4">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Calendar className="h-6 w-6 text-red-600" />
-                {t.timeline}
-              </h2>
-              <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                <Shield className="h-3 w-3" /> Real-time Auto-save enabled
-              </p>
-            </div>
-            <div className="flex gap-2">
-               <button 
-                onClick={handleManualSave}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-              >
-                <Save className="h-4 w-4" />
-                {showSaveMsg ? <span className="text-green-600">{t.save_success}</span> : "Save"}
-              </button>
-              <button 
-                onClick={addStep}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium shadow-lg shadow-red-500/30"
-              >
-                <Plus className="h-4 w-4" />
-                {t.add_step}
-              </button>
-            </div>
-          </div>
+            // Save language preference
+            useEffect(() => {
+                localStorage.setItem('siamo_lang', lang);
+            }, [lang]);
 
-          {/* Visual Gantt Chart (Simplified) */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 overflow-x-auto">
-             {/* Year/Quarter Markers */}
-             <div className="flex border-b border-gray-200 dark:border-gray-800 pb-2 mb-4 text-xs text-gray-400 font-mono">
-                {Array.from({length: 6}).map((_, i) => {
-                  // Generate roughly 6 points along the timeline for reference
-                  const date = new Date(paddedMin + (totalDuration / 5) * i);
-                  return (
-                    <div key={i} className="flex-1 border-l border-gray-100 dark:border-gray-800 pl-1">
-                      {date.toLocaleString(lang === 'th' ? 'th-TH' : 'en-US', { month: 'short', year: '2-digit' })}
-                    </div>
-                  )
-                })}
-             </div>
+            useEffect(() => {
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
+                    document.body.classList.add('bg-gray-950');
+                    document.body.classList.remove('bg-gray-50');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.body.classList.add('bg-gray-50');
+                    document.body.classList.remove('bg-gray-950');
+                }
+            }, [darkMode]);
 
-            <div className="space-y-4 relative min-w-[600px]">
-              {steps.map((step, index) => {
-                 const { left, width } = calculateDurationWidth(step.startDate, step.endDate, paddedMin, totalDuration);
-                 return (
-                  <div key={step.id} className="relative h-12 flex items-center group">
-                    {/* Grid line background */}
-                    <div className="absolute inset-0 border-b border-gray-100 dark:border-gray-800/50 pointer-events-none"></div>
+            const changeLanguage = (newLang) => {
+                setLang(newLang);
+                setIsLangMenuOpen(false);
+            };
+
+            const handleStepChange = (id, field, value) => {
+                setSteps(steps.map(step => 
+                    step.id === id ? { ...step, [field]: value } : step
+                ));
+            };
+
+            const addStep = () => {
+                const lastDate = steps[steps.length - 1]?.endDate || new Date().toISOString().split('T')[0];
+                const nextDate = new Date(lastDate);
+                nextDate.setMonth(nextDate.getMonth() + 1);
+                
+                const newStep = {
+                    id: Date.now().toString(),
+                    title: t.placeholder_title,
+                    description: "",
+                    startDate: lastDate,
+                    endDate: nextDate.toISOString().split('T')[0],
+                    status: 'pending'
+                };
+                setSteps([...steps, newStep]);
+            };
+
+            const removeStep = (id) => {
+                setSteps(steps.filter(step => step.id !== id));
+            };
+
+            const handleManualSave = () => {
+                localStorage.setItem('siamo_steps', JSON.stringify(steps));
+                setShowSaveMsg(true);
+                setTimeout(() => setShowSaveMsg(false), 2000);
+            };
+
+            const getQuarter = (dateString) => {
+                const date = new Date(dateString);
+                const month = date.getMonth() + 1;
+                const year = date.getFullYear().toString().substr(-2);
+                
+                let qText = t.q4;
+                if (month <= 3) qText = t.q1;
+                else if (month <= 6) qText = t.q2;
+                else if (month <= 9) qText = t.q3;
+                
+                return `${qText} '${year}`;
+            };
+
+            const calculateDurationWidth = (start, end, minDate, totalDuration) => {
+                const s = new Date(start).getTime();
+                const e = new Date(end).getTime();
+                const left = ((s - minDate) / totalDuration) * 100;
+                const width = ((e - s) / totalDuration) * 100;
+                return { left: `${left}%`, width: `${width}%` };
+            };
+
+            const minDate = Math.min(...steps.map(s => new Date(s.startDate).getTime()));
+            const maxDate = Math.max(...steps.map(s => new Date(s.endDate).getTime()));
+            const paddedMin = minDate - (1000 * 60 * 60 * 24 * 15); 
+            const paddedMax = maxDate + (1000 * 60 * 60 * 24 * 15);
+            const totalDuration = paddedMax - paddedMin;
+
+            return (
+                <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'text-gray-100' : 'text-gray-900'}`} onClick={() => isLangMenuOpen && setIsLangMenuOpen(false)}>
                     
-                    {/* Bar */}
-                    <div 
-                      className="absolute h-8 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 opacity-80 group-hover:opacity-100 transition-all cursor-pointer shadow-sm flex items-center px-3 hover:shadow-red-500/20"
-                      style={{ left, width }}
-                      title={`${step.startDate} to ${step.endDate}`}
-                    >
-                      <span className="text-xs font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
-                         {index + 1}. {step.title}
-                      </span>
-                    </div>
-                    
-                    {/* Quarter Label floating */}
-                    <div className="absolute text-[10px] text-gray-400 -top-1" style={{ left }}>
-                       {getQuarter(step.startDate)}
-                    </div>
-                  </div>
-                 );
-              })}
-            </div>
-          </div>
+                    {/* Navbar */}
+                    <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-red-900/30">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center h-16">
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-500/30">
+                                        <Icons.Flame className="text-white h-5 w-5" />
+                                    </div>
+                                    <span className="font-bold text-2xl tracking-tighter hidden sm:block">
+                                        Siamo
+                                    </span>
+                                </div>
 
-          {/* Editable List */}
-          <div className="space-y-4">
-            {steps.map((step, index) => (
-              <div 
-                key={step.id} 
-                className="group bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm hover:shadow-md"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  
-                  {/* Step Info */}
-                  <div className="lg:col-span-1 flex flex-col items-center justify-center pt-2">
-                    <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center justify-center font-bold">
-                      {index + 1}
-                    </div>
-                    <div className="h-full w-0.5 bg-gray-100 dark:bg-gray-800 mt-4 group-last:hidden"></div>
-                  </div>
+                                <div className="flex items-center gap-4">
+                                    {/* Language Dropdown (Click based) */}
+                                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                        <button 
+                                            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                                            className="flex items-center gap-1 text-sm font-medium hover:text-red-500 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                                        >
+                                            <Icons.Globe className="h-4 w-4" />
+                                            {lang.toUpperCase()}
+                                            <Icons.ChevronDown className={`h-3 w-3 ml-1 transition-transform ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        
+                                        {isLangMenuOpen && (
+                                            <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 dropdown-animate overflow-hidden">
+                                                <button onClick={() => changeLanguage('en')} className="block w-full text-left px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-gray-700 hover:text-red-600 transition-colors">English</button>
+                                                <button onClick={() => changeLanguage('th')} className="block w-full text-left px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-gray-700 hover:text-red-600 transition-colors">ไทย</button>
+                                                <button onClick={() => changeLanguage('ru')} className="block w-full text-left px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-gray-700 hover:text-red-600 transition-colors">Русский</button>
+                                            </div>
+                                        )}
+                                    </div>
 
-                  {/* Content Inputs */}
-                  <div className="lg:col-span-7 space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                        {t.step} Title
-                      </label>
-                      <input 
-                        type="text" 
-                        value={step.title}
-                        onChange={(e) => handleStepChange(step.id, 'title', e.target.value)}
-                        className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none transition-colors pb-1 text-gray-900 dark:text-white placeholder-gray-400"
-                        placeholder="Step Title"
-                      />
-                    </div>
-                    <div>
-                      <input 
-                        type="text" 
-                        value={step.description}
-                        onChange={(e) => handleStepChange(step.id, 'description', e.target.value)}
-                        className="w-full text-sm text-gray-500 dark:text-gray-400 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none transition-colors pb-1 placeholder-gray-500"
-                        placeholder="Description of this phase..."
-                      />
-                    </div>
-                  </div>
+                                    <button 
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                                    >
+                                        {darkMode ? <Icons.Sun className="h-5 w-5 text-orange-400" /> : <Icons.Moon className="h-5 w-5 text-gray-600" />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
 
-                  {/* Date & Status Inputs */}
-                  <div className="lg:col-span-4 grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t.start_date}</label>
-                      <input 
-                        type="date" 
-                        value={step.startDate}
-                        onChange={(e) => handleStepChange(step.id, 'startDate', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none hover:border-red-200 dark:hover:border-red-900"
-                      />
-                      <div className="text-[10px] text-red-500 mt-1 font-mono text-right">{getQuarter(step.startDate)}</div>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t.end_date}</label>
-                      <input 
-                        type="date" 
-                        value={step.endDate}
-                        onChange={(e) => handleStepChange(step.id, 'endDate', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none hover:border-red-200 dark:hover:border-red-900"
-                      />
-                      <div className="text-[10px] text-red-500 mt-1 font-mono text-right">{getQuarter(step.endDate)}</div>
-                    </div>
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+                        
+                        {/* Header */}
+                        <div className="text-center space-y-4">
+                            <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight pb-2">
+                                <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent">
+                                    {t.title}
+                                </span>
+                            </h1>
+                            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                                {t.subtitle}
+                            </p>
+                        </div>
 
-                    <div className="col-span-2 flex justify-between items-center mt-2">
-                      <select 
-                        value={step.status}
-                        onChange={(e) => handleStepChange(step.id, 'status', e.target.value)}
-                        className="bg-transparent text-sm font-medium text-gray-600 dark:text-gray-300 border-none focus:ring-0 cursor-pointer hover:text-red-500"
-                      >
-                        <option value="pending">⏳ Pending</option>
-                        <option value="in_progress">🔥 In Progress</option>
-                        <option value="completed">✅ Completed</option>
-                      </select>
-                      
-                      <button 
-                        onClick={() => removeStep(step.id)}
-                        className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        title="Remove Step"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
+                        {/* Analysis Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Dev View */}
+                            <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-red-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 group">
+                                <div className="h-12 w-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors">
+                                    <Icons.Code className="h-6 w-6 text-red-600 dark:text-red-400" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">{t.dev_view}</h3>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                                    {t.dev_desc}
+                                </p>
+                            </div>
 
+                            {/* Investor View */}
+                            <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-orange-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-orange-500 dark:hover:border-orange-500 transition-all duration-300 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-500 opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity"></div>
+                                <div className="h-12 w-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/40 transition-colors">
+                                    <Icons.TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{t.investor_view}</h3>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                                    <strong>{t.investor_desc_prefix}</strong> {t.investor_desc}
+                                </p>
+                            </div>
+
+                            {/* Operator View */}
+                            <div className="p-6 rounded-2xl bg-white dark:bg-gray-900 shadow-xl shadow-gray-100/20 dark:shadow-none border border-gray-100 dark:border-gray-800 hover:border-gray-500 dark:hover:border-gray-400 transition-all duration-300 group">
+                                <div className="h-12 w-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-4 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
+                                    <Icons.Briefcase className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{t.operator_view}</h3>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                                    {t.operator_desc}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Timeline Section */}
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-800 pb-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                                        <Icons.Calendar className="h-6 w-6 text-red-600" />
+                                        {t.timeline}
+                                    </h2>
+                                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                                        <Icons.Shield className="h-3 w-3" /> {t.auto_save}
+                                    </p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={handleManualSave}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+                                    >
+                                        <Icons.Save className="h-4 w-4" />
+                                        {showSaveMsg ? <span className="text-green-600">{t.save_success}</span> : t.save_btn}
+                                    </button>
+                                    <button 
+                                        onClick={addStep}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium shadow-lg shadow-red-500/30"
+                                    >
+                                        <Icons.Plus className="h-4 w-4" />
+                                        {t.add_step}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Gantt Chart */}
+                            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 overflow-x-auto timeline-scroll">
+                                <div className="flex border-b border-gray-200 dark:border-gray-800 pb-2 mb-4 text-xs text-gray-400 font-mono">
+                                    {Array.from({length: 6}).map((_, i) => {
+                                        const date = new Date(paddedMin + (totalDuration / 5) * i);
+                                        const dateLocale = lang === 'th' ? 'th-TH' : lang === 'ru' ? 'ru-RU' : 'en-US';
+                                        return (
+                                            <div key={i} className="flex-1 border-l border-gray-100 dark:border-gray-800 pl-1">
+                                                {date.toLocaleString(dateLocale, { month: 'short', year: '2-digit' })}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                <div className="space-y-4 relative min-w-[600px]">
+                                    {steps.map((step, index) => {
+                                        const { left, width } = calculateDurationWidth(step.startDate, step.endDate, paddedMin, totalDuration);
+                                        return (
+                                            <div key={step.id} className="relative h-12 flex items-center group">
+                                                <div className="absolute inset-0 border-b border-gray-100 dark:border-gray-800/50 pointer-events-none"></div>
+                                                <div 
+                                                    className="absolute h-8 rounded-lg bg-gradient-to-r from-red-600 to-orange-500 opacity-80 group-hover:opacity-100 transition-all cursor-pointer shadow-sm flex items-center px-3 hover:shadow-red-500/20"
+                                                    style={{ left, width }}
+                                                    title={`${step.startDate} to ${step.endDate}`}
+                                                >
+                                                    <span className="text-xs font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
+                                                        {index + 1}. {step.title}
+                                                    </span>
+                                                </div>
+                                                <div className="absolute text-[10px] text-gray-400 -top-1" style={{ left }}>
+                                                    {getQuarter(step.startDate)}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Edit List */}
+                            <div className="space-y-4">
+                                {steps.map((step, index) => (
+                                    <div 
+                                        key={step.id} 
+                                        className="group bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 hover:border-red-300 dark:hover:border-red-800 transition-all shadow-sm hover:shadow-md"
+                                    >
+                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                            <div className="lg:col-span-1 flex flex-col items-center justify-center pt-2">
+                                                <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 flex items-center justify-center font-bold">
+                                                    {index + 1}
+                                                </div>
+                                                <div className="h-full w-0.5 bg-gray-100 dark:bg-gray-800 mt-4 group-last:hidden"></div>
+                                            </div>
+
+                                            <div className="lg:col-span-7 space-y-4">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                                                        {t.step} {t.step_title_label}
+                                                    </label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={step.title}
+                                                        onChange={(e) => handleStepChange(step.id, 'title', e.target.value)}
+                                                        className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none transition-colors pb-1 text-gray-900 dark:text-white placeholder-gray-400"
+                                                        placeholder={t.placeholder_title}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <input 
+                                                        type="text" 
+                                                        value={step.description}
+                                                        onChange={(e) => handleStepChange(step.id, 'description', e.target.value)}
+                                                        className="w-full text-sm text-gray-500 dark:text-gray-400 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-red-500 focus:outline-none transition-colors pb-1 placeholder-gray-500"
+                                                        placeholder={t.placeholder_desc}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="lg:col-span-4 grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">{t.start_date}</label>
+                                                    <input 
+                                                        type="date" 
+                                                        value={step.startDate}
+                                                        onChange={(e) => handleStepChange(step.id, 'startDate', e.target.value)}
+                                                        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none hover:border-red-200 dark:hover:border-red-900 text-gray-900 dark:text-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">{t.end_date}</label>
+                                                    <input 
+                                                        type="date" 
+                                                        value={step.endDate}
+                                                        onChange={(e) => handleStepChange(step.id, 'endDate', e.target.value)}
+                                                        className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none hover:border-red-200 dark:hover:border-red-900 text-gray-900 dark:text-white"
+                                                    />
+                                                </div>
+
+                                                <div className="col-span-2 flex justify-between items-center mt-2">
+                                                    <select 
+                                                        value={step.status}
+                                                        onChange={(e) => handleStepChange(step.id, 'status', e.target.value)}
+                                                        className="bg-transparent text-sm font-medium text-gray-600 dark:text-gray-300 border-none focus:ring-0 cursor-pointer hover:text-red-500"
+                                                    >
+                                                        <option value="pending">⏳ {t.status_pending}</option>
+                                                        <option value="in_progress">🔥 {t.status_progress}</option>
+                                                        <option value="completed">✅ {t.status_completed}</option>
+                                                    </select>
+                                                    
+                                                    <button 
+                                                        onClick={() => removeStep(step.id)}
+                                                        className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                        title="Remove Step"
+                                                    >
+                                                        <Icons.Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                    </main>
+                    <footer className="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400 text-sm">
+                        <p>{t.footer_text}</p>
+                    </footer>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            );
+        }
 
-      </main>
-      
-      {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400 text-sm">
-        <p>© 2024 Siamo Strategy Planner. Built for Speed & Scale.</p>
-      </footer>
-    </div>
-  );
-}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SiamoLaunchPlanner />);
+    </script>
+</body>
+</html>
